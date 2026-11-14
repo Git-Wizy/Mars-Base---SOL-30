@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Mars Base: Sol 30</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600&display=swap">
+<style>
+:root{--bg:#eef0fb;--ink:#1d1a33;--card:#fff;--line:#c4c7e6;--acc:#0b7a75;--on:#fff;--bad:#b3261e;--mute:#55527a;--note:#fff3d6;--real:#e3f4f2;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#14101f;--ink:#f3ece4;--card:#221a33;--line:#3d3358;--acc:#4fd1c5;--on:#0c1a19;--bad:#ff7b72;--mute:#b3aacb;--note:#3a2f1c;--real:#16322f}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#14101f;--ink:#f3ece4;--card:#221a33;--line:#3d3358;--acc:#4fd1c5;--on:#0c1a19;--bad:#ff7b72;--mute:#b3aacb;--note:#3a2f1c;--real:#16322f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 18px/1.5 Fredoka,system-ui,sans-serif}
+.w{max-width:760px;margin:0 auto;padding:14px}
+h1{font-size:1.7rem;margin:.2em 0}h2{font-size:1.35rem;margin:.1em 0 .4em}
+.hz{border-radius:18px;overflow:hidden;border:2px solid var(--line)}.hz svg{display:block;width:100%;height:auto}
+#rv{transition:transform .8s}
+.top{display:flex;justify-content:space-between;align-items:baseline;gap:8px;flex-wrap:wrap}
+.sol{font-weight:600;color:var(--acc)}
+#meters{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:12px 0}
+.m{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:8px 12px}
+.m.low{border-color:var(--bad)}
+.mt{display:flex;justify-content:space-between;font-size:.95rem}
+.bar{height:12px;border-radius:8px;background:var(--line);margin-top:4px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .5s}.low .bar i{background:var(--bad)}
+.card{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:16px;margin:12px 0}
+.note{background:var(--note);border-radius:12px;padding:10px 12px;margin:10px 0}
+.real{background:var(--real);border-left:6px solid var(--acc);border-radius:10px;padding:10px 12px;margin:10px 0;font-size:.95rem}
+.sim{border-left:6px solid var(--bad)}
+.opts{display:grid;gap:10px;margin-top:10px}
+button{font:inherit;text-align:left;color:var(--ink);background:var(--card);border:2px solid var(--acc);border-radius:14px;padding:10px 14px;cursor:pointer}
+button b{display:block}button small{color:var(--mute)}
+button.go{background:var(--acc);color:var(--on);text-align:center;font-weight:600}
+button:disabled{opacity:.5;cursor:not-allowed}
+button:focus-visible,a:focus-visible{outline:4px solid var(--ink);outline-offset:2px}
+a{color:var(--acc)}
+.sc{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.sc div{background:var(--bg);border-radius:12px;padding:8px;text-align:center}
+footer{font-size:.85rem;color:var(--mute);margin:16px 0 28px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style></head><body><div class="w">
+<div class="top"><h1>Mars Base: Sol 30</h1><div class="sol" id="sol"></div></div>
+<div class="hz" aria-hidden="true"><svg viewBox="0 0 600 90"><defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2b2150"/><stop offset="1" stop-color="#e59a6b"/></linearGradient></defs><rect width="600" height="90" fill="url(#g)"/><circle cx="500" cy="38" r="9" fill="#ffe9c2"/><path d="M0 70Q150 55 300 68T600 62V90H0Z" fill="#a8482a"/><path d="M24 66a22 22 0 0 1 44 0z" fill="#efe7df"/><g id="rv"><rect x="84" y="60" width="18" height="7" rx="2" fill="#fff"/><circle cx="88" cy="68" r="3" fill="#222"/><circle cx="99" cy="68" r="3" fill="#222"/></g></svg></div>
+<div id="meters"></div>
+<div id="stage" aria-live="polite"></div>
+<footer>Real data: NASA DONKI (Space Weather Database), <a href="https://ccmc.gsfc.nasa.gov/tools/DONKI/">ccmc.gsfc.nasa.gov/tools/DONKI</a>, and Curiosity RAD measurements as reported by <a href="https://www.space.com/powerful-solar-storm-mars-radiation-astronaut-missions">Space.com</a>. All meters, costs and radiation “game units” are simulated for learning and are not real Mars measurements. This is not an official NASA product.</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const DONKI={id:"2024-05-08T04:37:00-FLR-001",cls:"X1.0",date:"8 May 2024",region:"Active Region 13664",link:"https://webtools.ccmc.gsfc.nasa.gov/DONKI/view/FLR/30551/4"};
+const M=[["power","Power","⚡"],["life","Life support","💧"],["food","Food","🥬"],["health","Crew health","🧑‍🚀"],["research","Research","🔬"]];
+let S;
+function init(){S={sol:1,power:80,life:100,food:100,health:100,research:0,dose:0,crops:[],dust:0,dustMode:"",storm:0,mode:"",leak:0,pending:[],done:{},asked:{},over:false,before:{}}}
+const cl=v=>Math.max(0,Math.min(100,v));
+function clampAll(){["power","life","food","health","research"].forEach(k=>S[k]=cl(S[k]))}
+function hit(d){S.dose+=d;S.health-=Math.round(d*.35)}
+const A={
+research:{n:`Do outdoor research`,d:`Collect rock and dust samples. Costs 8 power.`,
+ off:()=>S.storm>0&&S.mode==="shelter"?`Crew is sheltering from the storm`:"",
+ f(){S.power-=8;let g=S.dustMode==="low"&&S.dust>0?4:8,x="";if(S.storm>0&&S.mode==="work"){g=12;hit(30);x=` Working outside during the storm added 30 simulated radiation units and hurt crew health.`}S.research+=g;return `You collected samples. Research +${g}.${x}`},
+ sci:`Science needs electricity. Every hour spent on research is power that life support can’t use.`},
+recycle:{n:`Run the water and air recycler`,d:`Costs 10 power, restores 16 life support.`,
+ f(){S.power-=10;S.life+=16;return `The recycler cleaned the water and air.`},
+ sci:`Mars crews can’t carry endless supplies, so they recycle. But recycling pumps and heaters use power, so life support and power are linked.`},
+greenhouse:{n:`Plant a greenhouse crop`,d:`Costs 6 power and a little water. Food arrives in 5 sols.`,
+ f(){S.power-=6;S.life-=3;S.crops.push(S.sol+5);return `You planted a crop. It will be ready on sol ${S.sol+5}.`},
+ sci:`Plants take time. Food you plant today can’t help you today, so a good crew plans ahead.`},
+panels:{n:`Sweep dust off the solar panels`,d:`Brings back power right away.`,
+ f(){const g=S.dust>0?7:14;S.power+=g;return `The panels shine again. Power +${g}.`},
+ sci:`Dust blocks sunlight. Clean panels make more electricity, and that is the base’s only income.`},
+rest:{n:`Rest and check on the crew`,d:`Crew health +6. Costs 2 power.`,
+ f(){S.health+=6;S.power-=2;return `The crew rested and felt better.`},
+ sci:`Tired astronauts make mistakes. Rest is part of mission safety.`}
+};
+const EV={
+6:{t:`A dust storm is coming!`,b:`Thick dust will block sunlight for 4 sols, so your solar panels will make much less power.`,earth:`Earth reply: “Dust storms can last weeks. Save power until it clears.”`,
+ ch:[{l:`Switch to low-power mode`,s:`Upkeep drops from 8 to 3 power per sol, but research is cut in half.`,f(){S.dust=4;S.dustMode="low";return `You switched off non-essential machines.`},sci:`Real Mars rovers go into low-power mode in dust storms. Saving energy keeps the important systems alive.`},
+ {l:`Keep everything running`,s:`Normal upkeep and research, but power will run down fast.`,f(){S.dust=4;S.dustMode="";return `You kept everything on.`},sci:`Full speed works only if you have enough power in the bank. Check your power meter!`}]},
+12:{t:`Solar flare alert!`,real:true,b:`The Sun just launched a burst of energy and particles. Mars has no thick air or strong magnetic field to block them, so people outside could get a dose of radiation.`,earth:`Earth reply: “Particle storms can last a day or two. Crew should shelter.”`,
+ ch:[{l:`Shelter inside for 2 sols`,s:`No outdoor research while sheltering. Costs 4 power.`,f(){S.storm=2;S.mode="shelter";S.power-=4;return `The crew moved into the shielded shelter.`},sci:`Shelter costs science time but keeps radiation low. Scientists say rock cliffs and lava tubes could add extra shielding on Mars.`},
+ {l:`Keep working outside`,s:`Research +12 per sol, but 30 simulated radiation units per sol.`,f(){S.storm=2;S.mode="work";return `The crew kept working outside.`},sci:`More science now, but radiation doses add up over a mission. This is a real risk trade-off for astronauts.`}]},
+18:{t:`Water leak in the habitat!`,b:`A pipe is leaking. Water is dripping into the floor drain.`,earth:`Earth reply: “Fix leaks right away. Water is life.”`,
+ ch:[{l:`Patch the leak now`,s:`Costs 10 power and 5 life support.`,f(){S.power-=10;S.life-=5;return `You sealed the pipe.`},sci:`Repairs cost time and energy, but small leaks left alone become big problems.`},
+ {l:`Ignore it for now`,s:`Lose 20 life support now and 5 more each sol for 3 sols.`,f(){S.life-=20;S.leak=3;return `The leak kept dripping.`},sci:`Delaying a repair can cost far more than doing it right away.`}]},
+22:{t:`The greenhouse plants are sick!`,b:`A blight has hit the crops. Every crop still growing is lost.`,earth:`Earth reply: “Replant with spare seeds and check your soil.”`,
+ ch:[{l:`Replant with spare seeds`,s:`Costs 6 life support (water). New crop in 4 sols.`,f(){S.crops=[S.sol+4];S.life-=6;return `You replanted. New seedlings are on the way.`},sci:`Growing food means managing risk. Spare seeds are like a backup plan.`},
+ {l:`Eat from the stores instead`,s:`No more crops from this batch.`,f(){S.crops=[];return `You gave up on this batch.`},sci:`Stored food is safe but it runs out. Mars crews can’t just buy more.`}]},
+25:{t:`Ice discovered under the rocks!`,b:`Your scanner found ice. Digging for a sample is a big research chance.`,earth:`Earth reply: “Great find! Sample carefully.”`,
+ ch:[{l:`Drill for an ice sample`,s:`Costs 15 power. Research +20.`,f(){S.power-=15;S.research+=20;return `You drilled and brought back ice!`},sci:`Ice could be melted for water and air. Finding it is a big deal for future Mars bases.`},
+ {l:`Save power instead`,s:`Keep your energy for life support.`,f(){return `You marked the spot to visit later.`},sci:`Good planners know when a chance isn’t worth the risk.`}]}
+};
+function meters(){
+ $("meters").innerHTML=M.map(([k,n,i])=>{const v=Math.round(S[k]),lo=v<25&&k!=="research";
+ return `<div class="m${lo?" low":""}"><div class="mt"><span>${i} ${n}</span><b>${v}${lo?" (low!)":""}</b></div><div class="bar" role="progressbar" aria-label="${n}" aria-valuenow="${v}" aria-valuemin="0" aria-valuemax="100"><i style="width:${v}%"></i></div></div>`}).join("")+
+ `<div class="m"><div class="mt"><span>☢️ Radiation dose (game units)</span><b>${S.dose}</b></div><div class="bar"><i style="width:${Math.min(100,S.dose)}%"></i></div></div>`;
+ $("sol").textContent=`Sol ${Math.min(S.sol,30)} of 30`;
+ $("rv").style.transform=`translate(${(Math.min(S.sol,30)-1)/29*470}px,0)`;
+}
+function welcome(){init();meters();$("stage").innerHTML=`<div class="card"><h2>Welcome, Junior Astronaut!</h2><p>You run a small base on Mars for 30 sols (a sol is one Martian day). Each sol you pick one job. Keep power, life support and food up, protect the crew, and do research.</p><p>Earth is far away. Its answers take time, so you must decide for yourself.</p><div class="opts"><button class="go" onclick="startSol()">Start the mission</button></div></div>`}
+function startSol(){S.before={power:S.power,life:S.life,food:S.food,health:S.health,research:S.research,dose:S.dose};meters();EV[S.sol]&&!S.done[S.sol]?showEvent():showActs()}
+function showEvent(){const e=EV[S.sol];
+ $("stage").innerHTML=`<div class="card"><h2>${e.t}</h2><p>${e.b}</p>${e.real?`<div class="real"><b>Real NASA data (DONKI)</b><br>Event: solar flare ${DONKI.cls}, ${DONKI.date}, from ${DONKI.region}. Record ID: ${DONKI.id}. <a href="${DONKI.link}" target="_blank" rel="noopener">See the NASA record</a>.<br>On 20 May 2024, Curiosity’s radiation detector measured about 8,100 micrograys during a solar storm, like about 30 chest X-rays (<a href="https://www.space.com/powerful-solar-storm-mars-radiation-astronaut-missions" target="_blank" rel="noopener">Space.com</a>).</div><div class="real sim"><b>Simulated game values</b><br>The 30 radiation “game units” below are made up to teach the idea. They are not real Mars measurements.</div>`:""}
+ <div class="opts">${e.ch.map((c,i)=>`<button onclick="pick(${i})"><b>${c.l}</b><small>${c.s}</small></button>`).join("")}<button id="ask" onclick="ask()"><b>Ask Earth for advice</b><small>Earth’s reply takes 2 sols, so you still have to decide now.</small></button></div></div>`}
+function ask(){S.pending.push({sol:S.sol+2,t:EV[S.sol].earth});$("ask").disabled=true;$("ask").innerHTML=`<b>Message sent!</b><small>The reply will arrive on sol ${S.sol+2}. Decide for yourself now.</small>`}
+function pick(i){const c=EV[S.sol].ch[i];S.done[S.sol]=1;const r=c.f();clampAll();meters();showActs({d:`${c.l}. ${r}`,s:c.sci})}
+function showActs(n){
+ $("stage").innerHTML=`<div class="card">${n?`<div class="note"><b>${n.d}</b><br>Science: ${n.s}</div>`:""}<h2>Sol ${S.sol}: what will you do?</h2><div class="opts">${Object.keys(A).map(k=>{const o=A[k].off&&A[k].off();return `<button onclick="act('${k}')" ${o?"disabled":""}><b>${A[k].n}</b><small>${o||A[k].d}</small></button>`}).join("")}</div></div>`}
+function act(k){const r=A[k].f();const notes=endSol();clampAll();meters();
+ const b=S.before,ch=M.map(([x,n])=>{const d=Math.round(S[x]-b[x]);return `${n} ${d>=0?"+":""}${d}`}).join(", ");
+ const last=S.over;
+ $("stage").innerHTML=`<div class="card"><h2>End of sol ${Math.min(S.sol-1,30)}</h2><p>${r}</p><div class="note">${notes.map(x=>`<div>${x}</div>`).join("")}<div><b>Changes today:</b> ${ch}</div></div><p><b>Science:</b> ${A[k].sci}</p><div class="opts"><button class="go" onclick="${last?"report()":"startSol()"}">${last?"See your mission report":"Start sol "+S.sol}</button></div></div>`}
+function endSol(){const n=[];
+ const gen=S.dust>0?4.8:12,up=S.dustMode==="low"&&S.dust>0?3:8;
+ S.power+=gen-up;n.push(`Solar panels made ${Math.round(gen)} power; the base used ${up}.${S.dust>0?" Dust is blocking the sun.":""}`);
+ S.life-=8;S.food-=6;n.push(`The crew used 8 life support and ate 6 food.`);
+ if(S.leak>0){S.life-=5;S.leak--;n.push(`The leak lost 5 more life support.`)}
+ if(S.power<=0){S.life-=10;n.push(`Blackout! Heaters and pumps stopped, so life support dropped 10 extra.`)}
+ S.sol++;
+ const rd=S.crops.filter(c=>c<=S.sol);if(rd.length){S.food+=20*rd.length;S.crops=S.crops.filter(c=>c>S.sol);n.push(`🥬 Crop harvest! Food +${20*rd.length}.`)}
+ if(S.life<=0){S.health-=20;n.push(`No life support! Crew health -20.`)}
+ if(S.food<=0){S.health-=15;n.push(`No food! Crew health -15.`)}
+ if(S.dust>0){S.dust--;if(!S.dust){S.dustMode="";n.push(`The dust storm cleared.`)}}
+ if(S.storm>0){S.storm--;if(!S.storm){S.mode="";n.push(`The particle storm ended.`)}}
+ S.pending.filter(p=>p.sol<=S.sol).forEach(p=>n.push(`📡 ${p.t}`));S.pending=S.pending.filter(p=>p.sol>S.sol);
+ if(S.health<=0||S.sol>30)S.over=true;return n}
+function stars(v,a,b){return v>=a?"⭐⭐⭐":v>=b?"⭐⭐":"⭐"}
+function report(){clampAll();const sup=Math.round((S.power+S.life+S.food)/3),ok=S.health>0,tot=Math.round(S.health+sup+S.research);let best="";
+ try{const p=+localStorage.getItem("marsbase-best")||0;if(tot>p&&ok)localStorage.setItem("marsbase-best",tot);best=`Best score on this device: ${Math.max(p,ok?tot:0)}`}catch(e){}
+ $("stage").innerHTML=`<div class="card"><h2>${ok?"Mission complete! The crew made it to sol 30.":"Mission failed on sol "+(S.sol-1)+"."}</h2><p>${ok?"Great work, Commander.":"The crew could not survive. Try a new plan!"}</p>
+ <div class="sc"><div><b>Crew safety</b><br>${stars(S.health,75,40)}<br>Health ${Math.round(S.health)}</div><div><b>Supplies</b><br>${stars(sup,60,30)}<br>Average ${sup}</div><div><b>Research</b><br>${stars(S.research,60,35)}<br>Score ${Math.round(S.research)}</div><div><b>Radiation</b><br>${S.dose?"Dose "+S.dose:"None"}<br>(simulated)</div></div>
+ <div class="note"><b>Total score: ${tot}</b> ${best}<br>${S.dose>=30?"You took a radiation risk to get more science. Would you shelter next time?":"You kept the crew shielded from radiation."} Try a different strategy: shelter or work through the flare, low-power mode or full power, and see how the ending changes.</div>
+ <div class="opts"><button class="go" onclick="welcome()">Play again</button></div></div>`}
+welcome();
+</script></body></html>
