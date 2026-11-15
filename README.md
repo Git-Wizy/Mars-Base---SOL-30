@@ -18,11 +18,6 @@ Open `index.html` in a browser. No build step, no install, no account.
 
 Scripts load in this order: `data.js`, `game.js`, `nasa.js`.
 
-## Deploy (GitHub Pages)
-1. Create a public GitHub repo and upload everything in this folder.
-2. Settings, Pages, choose the `main` branch.
-3. Open the live link. Check the browser console (F12) for errors on the NASA call.
-
 ## NASA data
 - Real: DONKI solar flare `2024-05-08T04:37:00-FLR-001` (X1.0, Active Region 13664). Link is in `data.js`.
 - Real: Curiosity radiation measurement, about 8,100 micrograys on 20 May 2024, as reported by Space.com.
